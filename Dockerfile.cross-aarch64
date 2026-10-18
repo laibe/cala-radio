@@ -1,0 +1,38 @@
+# Custom cross-compilation image for aarch64-unknown-linux-gnu with ALSA support.
+#
+# Build once:
+#   docker build --platform linux/amd64 -t radio-cross-aarch64 -f Dockerfile.cross-aarch64 .
+#
+# Then use in Cross.toml: image = "radio-cross-aarch64"
+
+FROM ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main
+
+# Install curl and build tools so we can compile ALSA from source.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates make && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Build ALSA from source using the cross compiler.
+# The aarch64 cross-rs image places headers/libs under /usr/aarch64-linux-gnu/.
+RUN cd /tmp && \
+    curl -LO https://www.alsa-project.org/files/pub/lib/alsa-lib-1.2.8.tar.bz2 && \
+    tar -xjf alsa-lib-1.2.8.tar.bz2 && \
+    cd alsa-lib-1.2.8 && \
+    CC=aarch64-linux-gnu-gcc \
+    AR=aarch64-linux-gnu-ar \
+    RANLIB=aarch64-linux-gnu-ranlib \
+    ./configure \
+        --host=aarch64-linux-gnu \
+        --prefix=/usr/aarch64-linux-gnu \
+        --disable-python \
+        --disable-topology \
+        --disable-ucm \
+        --disable-aload && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf alsa-lib-1.2.8*
+
+# Ensure pkg-config can find the manually-built ALSA.
+ENV PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig
+ENV PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-L/usr/aarch64-linux-gnu/lib"

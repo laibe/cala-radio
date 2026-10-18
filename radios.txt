@@ -1,0 +1,9 @@
+Flux FM,https://streams.fluxfm.de/live/mp3-128
+GDS FM,https://gdsfm.out.airtime.pro:8000/gdsfm_c
+80s80s,https://streams.80s80s.de/dinnerparty/mp3-192/
+BBC World,http://stream.live.vc.bbcmedia.co.uk/bbc_world_service
+France Inter,https://icecast.radiofrance.fr/franceinter-midfi.mp3
+Fr Culture,https://icecast.radiofrance.fr/franceculture-midfi.mp3
+Classic,https://0nlineradio.stream13.radiohost.de/classical-classical-study
+Dlf,https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3
+SRF 1,https://stream.srg-ssr.ch/m/regi_bs_bl/mp3_128

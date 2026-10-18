@@ -1,0 +1,57 @@
+# DietPi config.txt for the radio (Raspberry Pi Zero 2 W, 64-bit DietPi image)
+# Copy to the root of the boot (FAT) partition as config.txt (on the Pi: /boot/firmware/config.txt).
+# Based on DietPi's template: https://github.com/MichaIng/DietPi/blob/master/.build/images/RPi/config.txt
+# Docs: https://www.raspberrypi.com/documentation/computers/config_txt.html
+# Overlays: https://github.com/raspberrypi/firmware/blob/master/boot/overlays/README
+
+#-------Display---------
+# Headless: let the display blank and skip overscan compensation.
+hdmi_blanking=1
+disable_overscan=1
+
+#-------GPU memory splits-------
+# Headless, no KMS/DRM driver (dtoverlay=vc4-kms-v3d stays off, as in the RPi OS config)
+gpu_mem_256=16
+gpu_mem_512=16
+gpu_mem_1024=16
+
+#-------Boot splash screen------
+disable_splash=1
+
+#-------Onboard sound-----------
+# Audio goes through the TAS58xx amp, not the onboard PWM/HDMI audio.
+# NB: Keep CONFIG_SOUNDCARD=none in dietpi.txt. Picking a soundcard in dietpi-config removes
+# known DAC overlays and "dtparam=i2s" lines (tas58xx is not on that list, but avoid it anyway).
+dtparam=audio=off
+
+#-------I2C-------------
+# Rotary encoders, VFD, TAS58xx control
+dtparam=i2c_arm=on
+#dtparam=i2c_arm_baudrate=100000
+
+#-------SPI-------------
+# W5500 Ethernet
+dtparam=spi=on
+
+#-------Serial/UART-----
+# NB: "enable_uart=1" will enforce "core_freq=250" on RPi models with onboard WiFi.
+# NB: DietPi sets this to 0 on first boot if CONFIG_SERIAL_CONSOLE_ENABLE=0 in dietpi.txt.
+enable_uart=1
+
+#-------SD card HPD-----
+# Comment to enable SD card hot-plug detection, while booting via USB or network.
+dtparam=sd_poll_once
+
+#-------Overclock-------
+temp_limit=65
+initial_turbo=20
+
+#-------64-bit----------
+# DietPi's installer adds this on arm64 images. Remove it if you flash an armhf (32-bit) image.
+arm_64bit=1
+
+#-------Radio hardware--
+# TAS58xx amplifier. Not a stock overlay: copy tas58xx.dtbo into overlays/ on the boot partition.
+dtoverlay=tas58xx,i2creg=0x2d
+# WIZnet W5500 SPI Ethernet (stock overlay)
+dtoverlay=w5500

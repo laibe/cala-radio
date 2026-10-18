@@ -1,0 +1,5 @@
+# `unwrap`/`expect` are fine in tests — a failed assertion should panic. In the
+# daemon they are not: this runs unattended in a piece of furniture, and
+# nothing should take the process down for a recoverable reason.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

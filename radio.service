@@ -1,0 +1,60 @@
+[Unit]
+Description=Cala Radio
+# The radio needs a working network before it can stream anything, and an
+# audio device before it can play it.
+After=network-online.target sound.target
+Wants=network-online.target
+
+# Never stop trying. The default (5 restarts in 10 s -> give up and sit in a
+# failed state) is exactly the outcome this service exists to avoid: it would
+# leave the radio silent until someone SSHes in. With the interval set to 0
+# systemd restarts forever, and RestartSec keeps that from becoming a hot loop.
+StartLimitIntervalSec=0
+
+[Service]
+# `notify` rather than `simple` so systemd learns two things it otherwise
+# cannot: that startup finished, and — via WatchdogSec — that the control loop
+# is still ticking. Restart=always only catches a process that *dies*; the
+# watchdog is what catches one that is alive but wedged.
+Type=notify
+NotifyAccess=main
+WatchdogSec=60
+
+User=dietpi
+# DietPi creates the dietpi user without any hardware groups (unlike Pi OS's
+# default user), so grant the ones owning /dev/snd/*, /dev/i2c-1 and
+# /dev/gpiomem here. All three exist on the DietPi image; systemd refuses to
+# start the unit if one does not, so check `getent group audio i2c gpio`
+# first when moving to a different OS.
+SupplementaryGroups=audio i2c gpio
+
+WorkingDirectory=/home/dietpi
+ExecStart=/home/dietpi/radio /home/dietpi/radios.txt
+
+Restart=always
+RestartSec=3
+
+# Give the panel loop time to clear the display and close the Spotify session
+# before SIGKILL. It normally takes well under a second.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+Environment=RUST_LOG=info
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=radio
+
+# Modest hardening. Deliberately not aggressive: this needs /dev/i2c-1,
+# /dev/gpiomem, and ALSA, and a service that will not start is worse than one
+# with a broad-ish sandbox.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=false
+# 512 MB Pi. MemoryHigh throttles and reclaims first; MemoryMax is the hard
+# backstop. Deliberately not tight: an OOM-kill loop would be worse than the
+# leak it is guarding against, and librespot alone is tens of megabytes.
+MemoryHigh=256M
+MemoryMax=384M
+
+[Install]
+WantedBy=multi-user.target

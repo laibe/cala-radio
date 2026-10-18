@@ -1,0 +1,52 @@
+[package]
+name = "radio"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+rodio = { version = "0.19.0", default-features = false, features = ["symphonia-mp3"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+color-eyre = "0.6"
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.13", features = ["stream"] }
+futures-util = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+nicolai-vfd = { git = "https://github.com/laibe/nicolai-vfd.git" }
+librespot = { version = "0.8.0", default-features = false, features = ["rustls-tls-webpki-roots", "with-libmdns"] }
+sha1 = "0.10"
+hex = "0.4"
+rustls = { version = "0.23", features = ["ring"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+linux-embedded-hal = "0.4"
+adafruit-seesaw = "0.14"
+embedded-hal-bus = "0.3"
+rppal = "0.22"
+# Already built for cpal; used directly for the amplifier's EQ controls.
+alsa = "0.9"
+
+[dev-dependencies]
+tempfile = "3"
+# Test-only: the fake station in `src/testing.rs` serves real HTTP over a real
+# socket. Resolver v2 keeps these features out of the production binary.
+tokio = { version = "1", features = ["net", "io-util"] }
+
+# Tuned for the Pi Zero 2 W: a smaller, faster binary matters more than build
+# time here.
+#
+# Note `panic` is left at the default (unwind) on purpose. The playback
+# supervisor treats a panicking decode task as just another failed attempt and
+# reconnects, so a bad stream costs one reconnect rather than taking the clock
+# and the Spotify session down with it. Panics are logged either way — see the
+# hook installed in main.rs.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[build-dependencies]
+# Pin transitive build-dependency vergen to fix librespot 0.8.0 build (see upstream vergen#478).
+vergen = "=9.0.6"
